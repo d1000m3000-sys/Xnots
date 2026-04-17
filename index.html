@@ -1,331 +1,79 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق المذكرات</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
-        body {
-            font-family: 'Tajawal', sans-serif;
-        }
-        .note-item {
-            transition: all 0.3s ease;
-        }
-        .note-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .slide-out {
-            animation: slideOut 0.3s ease-out forwards;
-        }
-        @keyframes slideOut {
-            to { opacity: 0; transform: translateX(100px); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xnots</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body { font-family: 'Tajawal', sans-serif; }
+</style>
+
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">📝 تطبيق المذكرات</h1>
-            <p class="text-gray-600">احفظ أفكارك وأهم الملاحظات بكل سهولة</p>
-        </div>
 
-        <!-- Add Note Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">إضافة مذكرة جديدة</h2>
-            <div class="space-y-4">
-                <input 
-                    type="text" 
-                    id="noteTitle" 
-                    placeholder="عنوان المذكرة..."
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                <textarea 
-                    id="noteContent" 
-                    placeholder="اكتب محتوى المذكرة هنا..."
-                    rows="4"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                ></textarea>
-                <button 
-                    onclick="addNote()"
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 transform hover:scale-105"
-                >
-                    ➕ إضافة مذكرة
-                </button>
-            </div>
-        </div>
+<body class="bg-gradient-to-br from-indigo-100 to-purple-200 min-h-screen p-4">
 
-        <!-- Search Section -->
-        <div class="bg-white rounded-lg shadow-lg p-4 mb-6">
-            <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="ابحث في المذكرات..."
-                oninput="searchNotes()"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-        </div>
+<h1 class="text-3xl font-bold text-center mb-6">📒 Xnots</h1>
 
-        <!-- Notes List -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">قائمة المذكرات</h2>
-            <div id="notesList" class="space-y-4">
-                <!-- Notes will be dynamically added here -->
-            </div>
-            <div id="emptyState" class="text-center py-12 text-gray-500 hidden">
-                <div class="text-6xl mb-4">📭</div>
-                <p class="text-lg">لا توجد مذكرات بعد</p>
-                <p class="text-sm">أضف أول مذكرة لك!</p>
-            </div>
-        </div>
+<div class="max-w-xl mx-auto">
 
-        <!-- Stats -->
-        <div class="mt-6 bg-white rounded-lg shadow-lg p-4">
-            <div class="flex justify-between items-center text-sm text-gray-600">
-                <span>إجمالي المذكرات: <span id="totalNotes" class="font-semibold">0</span></span>
-                <span>آخر تحديث: <span id="lastUpdate" class="font-semibold">-</span></span>
-            </div>
-        </div>
-    </div>
+<input id="note" placeholder="اكتب مذكرتك..."
+class="w-full p-3 rounded-lg border mb-3">
 
-    <script>
-        let notes = JSON.parse(localStorage.getItem('notes')) || [];
-        let editingNoteId = null;
+<button onclick="addNote()"
+class="w-full bg-indigo-500 text-white p-2 rounded-lg mb-4">
+➕ إضافة
+</button>
 
-        // Initialize the app
-        function init() {
-            renderNotes();
-            updateStats();
-            updateLastUpdate();
-        }
+<div id="notes"></div>
 
-        // Add a new note
-        function addNote() {
-            const titleInput = document.getElementById('noteTitle');
-            const contentInput = document.getElementById('noteContent');
-            
-            const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
-            
-            if (!title && !content) {
-                showNotification('الرجاء إدخال عنوان أو محتوى للمذكرة', 'warning');
-                return;
-            }
+</div>
 
-            const note = {
-                id: Date.now(),
-                title: title || 'بدون عنوان',
-                content: content || '',
-                createdAt: new Date().toLocaleString('ar-SA'),
-                updatedAt: new Date().toLocaleString('ar-SA')
-            };
+<script>
+let notes = JSON.parse(localStorage.getItem("xnots")) || [];
 
-            notes.unshift(note);
-            saveNotes();
-            renderNotes();
-            updateStats();
-            updateLastUpdate();
-            
-            // Clear inputs
-            titleInput.value = '';
-            contentInput.value = '';
-            
-            showNotification('تم إضافة المذكرة بنجاح!', 'success');
-        }
+function addNote(){
+let text = document.getElementById("note").value;
+if(!text) return;
 
-        // Edit a note
-        function editNote(id) {
-            const note = notes.find(n => n.id === id);
-            if (!note) return;
+notes.push(text);
+localStorage.setItem("xnots", JSON.stringify(notes));
 
-            const titleInput = document.getElementById('noteTitle');
-            const contentInput = document.getElementById('noteContent');
-            
-            titleInput.value = note.title;
-            contentInput.value = note.content;
-            
-            editingNoteId = id;
-            
-            // Change button text
-            const button = document.querySelector('button[onclick="addNote()"]');
-            button.textContent = '✏️ تحديث المذكرة';
-            button.onclick = updateNote;
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+document.getElementById("note").value="";
+showNotes();
+}
 
-        // Update an existing note
-        function updateNote() {
-            if (!editingNoteId) return;
+function deleteNote(i){
+notes.splice(i,1);
+localStorage.setItem("xnots", JSON.stringify(notes));
+showNotes();
+}
 
-            const titleInput = document.getElementById('noteTitle');
-            const contentInput = document.getElementById('noteContent');
-            
-            const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
-            
-            if (!title && !content) {
-                showNotification('الرجاء إدخال عنوان أو محتوى للمذكرة', 'warning');
-                return;
-            }
+function showNotes(){
+let html="";
+notes.forEach((n,i)=>{
+html+=`
+<div class="bg-white p-3 rounded-lg mb-2 flex justify-between">
+<span>${n}</span>
+<button onclick="deleteNote(${i})">❌</button>
+</div>`;
+});
+document.getElementById("notes").innerHTML=html;
+}
 
-            const noteIndex = notes.findIndex(n => n.id === editingNoteId);
-            if (noteIndex !== -1) {
-                notes[noteIndex].title = title || 'بدون عنوان';
-                notes[noteIndex].content = content || '';
-                notes[noteIndex].updatedAt = new Date().toLocaleString('ar-SA');
-                
-                saveNotes();
-                renderNotes();
-                updateStats();
-                updateLastUpdate();
-                
-                // Clear inputs and reset button
-                titleInput.value = '';
-                contentInput.value = '';
-                editingNoteId = null;
-                
-                const button = document.querySelector('button[onclick="updateNote()"]');
-                button.textContent = '➕ إضافة مذكرة';
-                button.onclick = addNote;
-                
-                showNotification('تم تحديث المذكرة بنجاح!', 'success');
-            }
-        }
+showNotes();
 
-        // Delete a note
-        function deleteNote(id) {
-            const noteElement = document.querySelector(`[data-id="${id}"]`);
-            if (noteElement) {
-                noteElement.classList.add('slide-out');
-                setTimeout(() => {
-                    notes = notes.filter(n => n.id !== id);
-                    saveNotes();
-                    renderNotes();
-                    updateStats();
-                    updateLastUpdate();
-                    showNotification('تم حذف المذكرة بنجاح!', 'success');
-                }, 300);
-            }
-        }
+// تسجيل Service Worker
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("service-worker.js");
+}
+</script>
 
-        // Search notes
-        function searchNotes() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filteredNotes = notes.filter(note => 
-                note.title.toLowerCase().includes(searchTerm) || 
-                note.content.toLowerCase().includes(searchTerm)
-            );
-            renderNotes(filteredNotes);
-        }
-
-        // Render notes
-        function renderNotes(notesToRender = notes) {
-            const notesList = document.getElementById('notesList');
-            const emptyState = document.getElementById('emptyState');
-            
-            if (notesToRender.length === 0) {
-                notesList.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-            
-            emptyState.classList.add('hidden');
-            
-            notesList.innerHTML = notesToRender.map(note => `
-                <div data-id="${note.id}" class="note-item fade-in bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-semibold text-gray-800 text-lg">${escapeHtml(note.title)}</h3>
-                        <div class="flex space-x-2 space-x-reverse">
-                            <button 
-                                onclick="editNote(${note.id})"
-                                class="text-blue-500 hover:text-blue-700 transition-colors p-1"
-                                title="تعديل"
-                            >
-                                ✏️
-                            </button>
-                            <button 
-                                onclick="deleteNote(${note.id})"
-                                class="text-red-500 hover:text-red-700 transition-colors p-1"
-                                title="حذف"
-                            >
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-3 whitespace-pre-wrap">${escapeHtml(note.content)}</p>
-                    <div class="text-xs text-gray-500">
-                        <div>أنشئت: ${note.createdAt}</div>
-                        ${note.updatedAt !== note.createdAt ? `<div>حدثت: ${note.updatedAt}</div>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Save notes to localStorage
-        function saveNotes() {
-            localStorage.setItem('notes', JSON.stringify(notes));
-        }
-
-        // Update statistics
-        function updateStats() {
-            document.getElementById('totalNotes').textContent = notes.length;
-        }
-
-        // Update last update time
-        function updateLastUpdate() {
-            const now = new Date().toLocaleString('ar-SA');
-            document.getElementById('lastUpdate').textContent = now;
-        }
-
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 left-4 right-4 p-4 rounded-lg text-white font-semibold z-50 fade-in ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'warning' ? 'bg-yellow-500' : 
-                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-            }`;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Handle Enter key in textarea
-        document.getElementById('noteContent').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                if (editingNoteId) {
-                    updateNote();
-                } else {
-                    addNote();
-                }
-            }
-        });
-
-        // Initialize the app when page loads
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
 </body>
 </html>
+      

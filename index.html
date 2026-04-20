@@ -13,7 +13,6 @@
 <style>
 body { font-family: 'Tajawal', sans-serif; }
 </style>
-
 </head>
 
 <body class="bg-gradient-to-br from-indigo-100 to-purple-200 min-h-screen p-4">
@@ -22,33 +21,25 @@ body { font-family: 'Tajawal', sans-serif; }
 
 <div class="max-w-xl mx-auto">
 
-<!-- إدخال -->
-<input id="title" placeholder="عنوان..."
-class="w-full p-2 rounded mb-2">
+<input id="title" placeholder="عنوان..." class="w-full p-2 mb-2 rounded">
+<textarea id="note" placeholder="اكتب..." class="w-full p-2 mb-2 rounded"></textarea>
 
-<textarea id="note" placeholder="اكتب ملاحظتك..."
-class="w-full p-2 rounded mb-2"></textarea>
-
-<select id="category" class="w-full p-2 rounded mb-2">
+<select id="category" class="w-full p-2 mb-2 rounded">
 <option>عام</option>
 <option>شغل</option>
 <option>دراسة</option>
 <option>أفكار</option>
 </select>
 
-<input type="color" id="color" value="#ffffff" class="w-full mb-2">
+<input type="color" id="color" class="w-full mb-2">
 
-<button onclick="addNote()"
-class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
+<button onclick="addNote()" class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
 ➕ إضافة
 </button>
 
-<!-- بحث -->
-<input id="search" oninput="render()"
-placeholder="🔍 بحث..."
-class="w-full p-2 rounded mb-4">
+<input id="search" oninput="render()" placeholder="🔍 بحث..."
+class="w-full p-2 mb-4 rounded">
 
-<!-- عرض -->
 <div id="notes"></div>
 
 </div>
@@ -56,86 +47,68 @@ class="w-full p-2 rounded mb-4">
 <script>
 let notes = JSON.parse(localStorage.getItem("xnots")) || [];
 
-function save(){
-localStorage.setItem("xnots", JSON.stringify(notes));
-}
+function save(){ localStorage.setItem("xnots", JSON.stringify(notes)); }
 
 function addNote(){
-let note = {
+notes.push({
 id: Date.now(),
 title: title.value,
-text: noteInput.value,
+text: note.value,
 category: category.value,
-color: color.value,
-pinned: false
-};
-
-notes.push(note);
-save();
-clearInputs();
-render();
+color: color.value || "#fff",
+pinned:false
+});
+title.value=""; note.value="";
+save(); render();
 }
-
-function clearInputs(){
-title.value="";
-noteInput.value="";
-}
-
-const title = document.getElementById("title");
-const noteInput = document.getElementById("note");
-const category = document.getElementById("category");
-const color = document.getElementById("color");
 
 function deleteNote(id){
 notes = notes.filter(n=>n.id!==id);
-save();
-render();
+save(); render();
 }
 
-function togglePin(id){
+function pin(id){
 let n = notes.find(n=>n.id===id);
-n.pinned = !n.pinned;
-save();
-render();
+n.pinned=!n.pinned;
+save(); render();
 }
 
 function render(){
-let search = document.getElementById("search").value.toLowerCase();
-
+let s = search.value.toLowerCase();
 let sorted = [...notes].sort((a,b)=>b.pinned - a.pinned);
 
-let html="";
-
-sorted.forEach(n=>{
-if(
-n.title.toLowerCase().includes(search) ||
-n.text.toLowerCase().includes(search)
-){
-html+=`
-<div class="p-3 rounded mb-2" style="background:${n.color}">
+notesDiv.innerHTML = sorted.filter(n=>
+n.title.toLowerCase().includes(s) ||
+n.text.toLowerCase().includes(s)
+).map(n=>`
+<div class="p-3 mb-2 rounded" style="background:${n.color}">
 <div class="flex justify-between">
-<b>${n.title || "بدون عنوان"}</b>
+<b>${n.title||"بدون عنوان"}</b>
 <div>
-<button onclick="togglePin(${n.id})">📌</button>
+<button onclick="pin(${n.id})">📌</button>
 <button onclick="deleteNote(${n.id})">❌</button>
 </div>
 </div>
-
 <p>${n.text}</p>
 <small>${n.category}</small>
 </div>
-`;
+`).join("");
 }
-});
 
-document.getElementById("notes").innerHTML = html;
-}
+const title = document.getElementById("title");
+const note = document.getElementById("note");
+const category = document.getElementById("category");
+const color = document.getElementById("color");
+const search = document.getElementById("search");
+const notesDiv = document.getElementById("notes");
 
 render();
 
-// PWA
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("service-worker.js");
+// تسجيل Service Worker احترافي
+if ("serviceWorker" in navigator) {
+navigator.serviceWorker.register("service-worker.js").then(reg => {
+reg.update();
+});
 }
 </script>
 

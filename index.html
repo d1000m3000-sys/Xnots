@@ -19,7 +19,16 @@ body { font-family: 'Tajawal', sans-serif; }
 
 <h1 class="text-3xl font-bold text-center mb-6">📒 Xnots</h1>
 
-<div class="max-w-xl mx-auto">
+<!-- 🔐 شاشة القفل -->
+<div id="lockScreen" class="max-w-sm mx-auto bg-white p-4 rounded shadow">
+<h2 class="text-center mb-3">🔐 أدخل كلمة السر</h2>
+<input id="passwordInput" type="password" class="w-full p-2 mb-2 rounded border">
+<button onclick="unlock()" class="w-full bg-indigo-500 text-white p-2 rounded">دخول</button>
+<button onclick="setPassword()" class="w-full mt-2 bg-gray-400 text-white p-2 rounded">تعيين كلمة سر</button>
+</div>
+
+<!-- التطبيق -->
+<div id="app" class="hidden max-w-xl mx-auto">
 
 <input id="title" placeholder="عنوان..." class="w-full p-2 mb-2 rounded">
 <textarea id="note" placeholder="اكتب..." class="w-full p-2 mb-2 rounded"></textarea>
@@ -33,8 +42,8 @@ body { font-family: 'Tajawal', sans-serif; }
 
 <input type="color" id="color" class="w-full mb-2">
 
-<button onclick="addNote()" class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
-➕ إضافة
+<button onclick="saveNote()" class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
+💾 حفظ
 </button>
 
 <input id="search" oninput="render()" placeholder="🔍 بحث..."
@@ -46,20 +55,66 @@ class="w-full p-2 mb-4 rounded">
 
 <script>
 let notes = JSON.parse(localStorage.getItem("xnots")) || [];
+let editId = null;
 
-function save(){ localStorage.setItem("xnots", JSON.stringify(notes)); }
+// 🔐 القفل
+function unlock(){
+let pass = localStorage.getItem("lock");
+if(!pass){ showApp(); return; }
 
-function addNote(){
+if(passwordInput.value === pass){
+showApp();
+}else{
+alert("كلمة السر خطأ");
+}
+}
+
+function setPassword(){
+let p = prompt("اكتب كلمة سر:");
+if(p){
+localStorage.setItem("lock", p);
+alert("تم الحفظ");
+}
+}
+
+function showApp(){
+lockScreen.style.display="none";
+app.classList.remove("hidden");
+render();
+}
+
+// 💾 حفظ / تعديل
+function saveNote(){
+if(editId){
+let n = notes.find(n=>n.id===editId);
+n.title=title.value;
+n.text=note.value;
+n.category=category.value;
+n.color=color.value;
+editId=null;
+}else{
 notes.push({
-id: Date.now(),
-title: title.value,
-text: note.value,
-category: category.value,
-color: color.value || "#fff",
+id:Date.now(),
+title:title.value,
+text:note.value,
+category:category.value,
+color:color.value,
 pinned:false
 });
+}
+
 title.value=""; note.value="";
 save(); render();
+}
+
+function editNote(id){
+let n = notes.find(n=>n.id===id);
+title.value=n.title;
+note.value=n.text;
+category.value=n.category;
+color.value=n.color;
+editId=id;
+window.scrollTo(0,0);
 }
 
 function deleteNote(id){
@@ -73,18 +128,22 @@ n.pinned=!n.pinned;
 save(); render();
 }
 
+function save(){ localStorage.setItem("xnots", JSON.stringify(notes)); }
+
 function render(){
 let s = search.value.toLowerCase();
+
 let sorted = [...notes].sort((a,b)=>b.pinned - a.pinned);
 
-notesDiv.innerHTML = sorted.filter(n=>
-n.title.toLowerCase().includes(s) ||
-n.text.toLowerCase().includes(s)
+notes.innerHTML = sorted.filter(n=>
+(n.title||"").toLowerCase().includes(s) ||
+(n.text||"").toLowerCase().includes(s)
 ).map(n=>`
 <div class="p-3 mb-2 rounded" style="background:${n.color}">
 <div class="flex justify-between">
 <b>${n.title||"بدون عنوان"}</b>
 <div>
+<button onclick="editNote(${n.id})">✏️</button>
 <button onclick="pin(${n.id})">📌</button>
 <button onclick="deleteNote(${n.id})">❌</button>
 </div>
@@ -95,20 +154,20 @@ n.text.toLowerCase().includes(s)
 `).join("");
 }
 
+// عناصر
 const title = document.getElementById("title");
 const note = document.getElementById("note");
 const category = document.getElementById("category");
 const color = document.getElementById("color");
 const search = document.getElementById("search");
 const notesDiv = document.getElementById("notes");
+const passwordInput = document.getElementById("passwordInput");
+const lockScreen = document.getElementById("lockScreen");
+const app = document.getElementById("app");
 
-render();
-
-// تسجيل Service Worker احترافي
+// PWA
 if ("serviceWorker" in navigator) {
-navigator.serviceWorker.register("service-worker.js").then(reg => {
-reg.update();
-});
+navigator.serviceWorker.register("service-worker.js").then(r=>r.update());
 }
 </script>
 

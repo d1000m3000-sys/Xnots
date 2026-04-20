@@ -1,22 +1,26 @@
-const CACHE = "xnots-pro";
+const CACHE_NAME = "xnots-dynamic-v1";
 
-self.addEventListener("install", e=>{
-e.waitUntil(
-caches.open(CACHE).then(cache=>{
-return cache.addAll([
-"./",
-"./index.html",
-"./manifest.json",
-"./icon.png"
-]);
-})
-);
+self.addEventListener("install", e => {
+self.skipWaiting();
 });
 
-self.addEventListener("fetch", e=>{
+self.addEventListener("activate", e => {
+e.waitUntil(
+caches.keys().then(keys =>
+Promise.all(keys.map(k => caches.delete(k)))
+)
+);
+self.clients.claim();
+});
+
+self.addEventListener("fetch", e => {
 e.respondWith(
-caches.match(e.request).then(res=>{
-return res || fetch(e.request);
+fetch(e.request)
+.then(res => {
+let copy = res.clone();
+caches.open(CACHE_NAME).then(cache => cache.put(e.request, copy));
+return res;
 })
+.catch(() => caches.match(e.request))
 );
 });

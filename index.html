@@ -40,7 +40,7 @@ body { font-family: 'Tajawal', sans-serif; }
 <option>أفكار</option>
 </select>
 
-<input type="color" id="color" class="w-full mb-2">
+<input type="color" id="color" value="#ffffff" class="w-full mb-2">
 
 <button onclick="saveNote()" class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
 💾 حفظ
@@ -54,13 +54,29 @@ class="w-full p-2 mb-4 rounded">
 </div>
 
 <script>
+// البيانات
 let notes = JSON.parse(localStorage.getItem("xnots")) || [];
 let editId = null;
+
+// العناصر
+const title = document.getElementById("title");
+const noteInput = document.getElementById("note");
+const category = document.getElementById("category");
+const color = document.getElementById("color");
+const search = document.getElementById("search");
+const notesDiv = document.getElementById("notes");
+const passwordInput = document.getElementById("passwordInput");
+const lockScreen = document.getElementById("lockScreen");
+const app = document.getElementById("app");
 
 // 🔐 القفل
 function unlock(){
 let pass = localStorage.getItem("lock");
-if(!pass){ showApp(); return; }
+
+if(!pass){
+showApp();
+return;
+}
 
 if(passwordInput.value === pass){
 showApp();
@@ -73,7 +89,7 @@ function setPassword(){
 let p = prompt("اكتب كلمة سر:");
 if(p){
 localStorage.setItem("lock", p);
-alert("تم الحفظ");
+alert("تم حفظ كلمة السر");
 }
 }
 
@@ -85,57 +101,75 @@ render();
 
 // 💾 حفظ / تعديل
 function saveNote(){
+
+if(!title.value && !noteInput.value){
+alert("اكتب شي أولاً");
+return;
+}
+
 if(editId){
 let n = notes.find(n=>n.id===editId);
-n.title=title.value;
-n.text=note.value;
-n.category=category.value;
-n.color=color.value;
-editId=null;
+n.title = title.value;
+n.text = noteInput.value;
+n.category = category.value;
+n.color = color.value;
+editId = null;
 }else{
 notes.push({
-id:Date.now(),
-title:title.value,
-text:note.value,
-category:category.value,
-color:color.value,
+id: Date.now(),
+title: title.value,
+text: noteInput.value,
+category: category.value,
+color: color.value,
 pinned:false
 });
 }
 
-title.value=""; note.value="";
-save(); render();
+title.value="";
+noteInput.value="";
+
+save();
+render();
 }
 
+// تعديل
 function editNote(id){
 let n = notes.find(n=>n.id===id);
-title.value=n.title;
-note.value=n.text;
-category.value=n.category;
-color.value=n.color;
-editId=id;
+title.value = n.title;
+noteInput.value = n.text;
+category.value = n.category;
+color.value = n.color;
+editId = id;
 window.scrollTo(0,0);
 }
 
+// حذف
 function deleteNote(id){
 notes = notes.filter(n=>n.id!==id);
-save(); render();
+save();
+render();
 }
 
+// تثبيت
 function pin(id){
 let n = notes.find(n=>n.id===id);
-n.pinned=!n.pinned;
-save(); render();
+n.pinned = !n.pinned;
+save();
+render();
 }
 
-function save(){ localStorage.setItem("xnots", JSON.stringify(notes)); }
+// حفظ
+function save(){
+localStorage.setItem("xnots", JSON.stringify(notes));
+}
 
+// عرض
 function render(){
 let s = search.value.toLowerCase();
 
 let sorted = [...notes].sort((a,b)=>b.pinned - a.pinned);
 
-notes.innerHTML = sorted.filter(n=>
+notesDiv.innerHTML = sorted.filter(n=>
 (n.title||"").toLowerCase().includes(s) ||
 (n.text||"").toLowerCase().includes(s)
 ).map(n=>`
@@ -154,18 +188,10 @@ notes.innerHTML = sorted.filter(n=>
 `).join("");
 }
 
-// عناصر
-const title = document.getElementById("title");
-const note = document.getElementById("note");
-const category = document.getElementById("category");
-const color = document.getElementById("color");
-const search = document.getElementById("search");
-const notesDiv = document.getElementById("notes");
-const passwordInput = document.getElementById("passwordInput");
-const lockScreen = document.getElementById("lockScreen");
-const app = document.getElementById("app");
+// تشغيل
+render();
 
-// PWA
+// PWA بدون مشاكل كاش
 if ("serviceWorker" in navigator) {
 navigator.serviceWorker.register("service-worker.js").then(r=>r.update());
 }

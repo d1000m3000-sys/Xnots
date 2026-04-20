@@ -22,14 +22,33 @@ body { font-family: 'Tajawal', sans-serif; }
 
 <div class="max-w-xl mx-auto">
 
-<input id="note" placeholder="اكتب مذكرتك..."
-class="w-full p-3 rounded-lg border mb-3">
+<!-- إدخال -->
+<input id="title" placeholder="عنوان..."
+class="w-full p-2 rounded mb-2">
+
+<textarea id="note" placeholder="اكتب ملاحظتك..."
+class="w-full p-2 rounded mb-2"></textarea>
+
+<select id="category" class="w-full p-2 rounded mb-2">
+<option>عام</option>
+<option>شغل</option>
+<option>دراسة</option>
+<option>أفكار</option>
+</select>
+
+<input type="color" id="color" value="#ffffff" class="w-full mb-2">
 
 <button onclick="addNote()"
-class="w-full bg-indigo-500 text-white p-2 rounded-lg mb-4">
+class="w-full bg-indigo-500 text-white p-2 rounded mb-4">
 ➕ إضافة
 </button>
 
+<!-- بحث -->
+<input id="search" oninput="render()"
+placeholder="🔍 بحث..."
+class="w-full p-2 rounded mb-4">
+
+<!-- عرض -->
 <div id="notes"></div>
 
 </div>
@@ -37,38 +56,84 @@ class="w-full bg-indigo-500 text-white p-2 rounded-lg mb-4">
 <script>
 let notes = JSON.parse(localStorage.getItem("xnots")) || [];
 
+function save(){
+localStorage.setItem("xnots", JSON.stringify(notes));
+}
+
 function addNote(){
-let text = document.getElementById("note").value;
-if(!text) return;
+let note = {
+id: Date.now(),
+title: title.value,
+text: noteInput.value,
+category: category.value,
+color: color.value,
+pinned: false
+};
 
-notes.push(text);
-localStorage.setItem("xnots", JSON.stringify(notes));
-
-document.getElementById("note").value="";
-showNotes();
+notes.push(note);
+save();
+clearInputs();
+render();
 }
 
-function deleteNote(i){
-notes.splice(i,1);
-localStorage.setItem("xnots", JSON.stringify(notes));
-showNotes();
+function clearInputs(){
+title.value="";
+noteInput.value="";
 }
 
-function showNotes(){
+const title = document.getElementById("title");
+const noteInput = document.getElementById("note");
+const category = document.getElementById("category");
+const color = document.getElementById("color");
+
+function deleteNote(id){
+notes = notes.filter(n=>n.id!==id);
+save();
+render();
+}
+
+function togglePin(id){
+let n = notes.find(n=>n.id===id);
+n.pinned = !n.pinned;
+save();
+render();
+}
+
+function render(){
+let search = document.getElementById("search").value.toLowerCase();
+
+let sorted = [...notes].sort((a,b)=>b.pinned - a.pinned);
+
 let html="";
-notes.forEach((n,i)=>{
+
+sorted.forEach(n=>{
+if(
+n.title.toLowerCase().includes(search) ||
+n.text.toLowerCase().includes(search)
+){
 html+=`
-<div class="bg-white p-3 rounded-lg mb-2 flex justify-between">
-<span>${n}</span>
-<button onclick="deleteNote(${i})">❌</button>
-</div>`;
+<div class="p-3 rounded mb-2" style="background:${n.color}">
+<div class="flex justify-between">
+<b>${n.title || "بدون عنوان"}</b>
+<div>
+<button onclick="togglePin(${n.id})">📌</button>
+<button onclick="deleteNote(${n.id})">❌</button>
+</div>
+</div>
+
+<p>${n.text}</p>
+<small>${n.category}</small>
+</div>
+`;
+}
 });
-document.getElementById("notes").innerHTML=html;
+
+document.getElementById("notes").innerHTML = html;
 }
 
-showNotes();
+render();
 
-// تسجيل Service Worker
+// PWA
 if("serviceWorker" in navigator){
 navigator.serviceWorker.register("service-worker.js");
 }
@@ -76,4 +141,3 @@ navigator.serviceWorker.register("service-worker.js");
 
 </body>
 </html>
-      
